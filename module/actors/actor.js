@@ -163,7 +163,7 @@ export class CoCActor extends Actor {
 						indefiniteInstanity?
 							game.i18n.localize('CoC7.IndefiniteInsanity'):
 							`${game.i18n.localize('CoC7.TemporaryInsanity')} ${insanityDurationText?insanityDurationText:''}`
-						:''
+						:game.i18n.localize('CoC7.NotInsane')
 			}
 		};
 	}
@@ -950,19 +950,33 @@ export class CoCActor extends Actor {
 		return parsedFormula;
 	}
 
+	static getCharacteristicDefinition(){
+		const characteristics = [];
+		for( let [key, value] of Object.entries(game.system.template.Actor.templates.characteristics.characteristics)){
+			characteristics.push({
+				key: key,
+				shortName: game.i18n.localize(value.short),
+				label: game.i18n.localize( value.label)				
+			});
+		}
+		return characteristics;
+	}
+
 	getCharacteristic( charName){
-		for( let [key, value] of Object.entries(this.data.data.characteristics)){
-			if( 
-				game.i18n.localize(value.short).toLowerCase() == charName.toLowerCase() || 
+		if( this.data.data.characteristics){
+			for( let [key, value] of Object.entries(this.data.data.characteristics)){
+				if( 
+					game.i18n.localize(value.short).toLowerCase() == charName.toLowerCase() || 
 					game.i18n.localize(value.label).toLowerCase() == charName.toLowerCase() ||
 					key == charName.toLowerCase())
-			{
-				return {
-					key: key,
-					shortName: game.i18n.localize(value.short),
-					label: game.i18n.localize( value.label),
-					value: value.value
-				};
+				{
+					return {
+						key: key,
+						shortName: game.i18n.localize(value.short),
+						label: game.i18n.localize( value.label),
+						value: value.value
+					};
+				}
 			}
 		}
 		return null;
@@ -1948,6 +1962,73 @@ export class CoCActor extends Actor {
 		return skills;
 	}
 
+	/** Try to find a characteristic, attribute or skill that matches the name */
+	find( name){
+		//Try ID
+		const item = this.getOwnedItem( name);
+		if( item){
+			return{
+				type: 'item',
+				value: item
+			};
+		}
+
+		//Try to find a skill with exact name.
+		const skill = this.skills.filter( s => {
+			return(
+				!!s.name && (
+					(s.name.toLocaleLowerCase().replace( /\s/g, '') == name.toLocaleLowerCase().replace( /\s/g, '')) ||
+					(s.sName.toLocaleLowerCase().replace( /\s/g, '') == name.toLocaleLowerCase().replace( /\s/g, '')))
+			);
+		});
+		if( skill.length) return { type: 'item', value: skill[0]};
+
+		//Try to find a characteristic.
+		const charKey = ['str', 'con', 'siz', 'dex', 'app', 'int', 'pow', 'edu'];
+		for (let i = 0; i < charKey.length; i++) {
+			const char = this.getCharacteristic( charKey[i]);
+			if( char){
+				if( char.key?.toLocaleLowerCase() == name.toLowerCase()) return { type: 'characteristic', value: char};
+				if( char.shortName?.toLocaleLowerCase() == name.toLowerCase()) return { type: 'characteristic', value: char};
+				if( char.label?.toLocaleLowerCase() == name.toLowerCase()) return { type: 'characteristic', value: char};			
+			}
+		}
+
+
+		//Try to find a attribute.
+		const attribKey = ['lck', 'san'];
+		for (let i = 0; i < attribKey.length; i++) {
+			const attr = this.getAttribute( attribKey[i]);
+			if( attr){
+				if( attr.key?.toLocaleLowerCase() == name.toLowerCase()) return { type: 'attribute', value: attr};
+				if( attr.shortName?.toLocaleLowerCase() == name.toLowerCase()) return { type: 'attribute', value: attr};
+				if( attr.label?.toLocaleLowerCase() == name.toLowerCase()) return { type: 'attribute', value: attr};
+			}
+		}
+
+		//Try with partial ??
+		return undefined;
+
+	}
+
+	get pilotSkills(){
+		return this.skills.filter( s => {
+			return (
+				!!s.data.data.specialization &&
+				s.data.data.specialization.length &&
+				s.data.data.specialization?.toLocaleLowerCase() == game.i18n.localize( 'CoC7.PilotSpecializationName')?.toLocaleLowerCase());
+		});
+	}
+	
+	get driveSkills(){
+		return this.skills.filter( s => {
+			return (
+				!!s.data.data.specialization &&
+				s.data.data.specialization.length &&
+				s.data.data.specialization?.toLocaleLowerCase() == game.i18n.localize( 'CoC7.DriveSpecializationName')?.toLocaleLowerCase());
+		});
+	}
+
 	get tokenKey() //Clarifier ca et tokenid
 	{
 		//Case 1: the actor is a synthetic actor and has a token, return token key.
@@ -2114,6 +2195,45 @@ export class CoCActor extends Actor {
 		return( {failure : failure, success: success});
 	}
 
+	async developLuck(fastForward = false) {
+		const luck = this.data.data.attribs.lck;
+		const upgradeRoll = new Roll('1D100');
+		const title = game.i18n.localize('CoC7.RollLuck4Dev');
+		let message = '<p class="chat-card">';
+		upgradeRoll.roll();
+		if(!fastForward) await CoC7Dice.showRollDice3d(upgradeRoll);
+		if(upgradeRoll.total > luck.value) {
+			const augmentRoll = new Roll('1D10');
+			augmentRoll.roll();
+			if(!fastForward) await CoC7Dice.showRollDice3d(augmentRoll);
+				if((luck.value + augmentRoll.total) <= 99) {
+					await this.update({
+						'data.attribs.lck.value': this.data.data.attribs.lck.value + augmentRoll.total
+					})
+					message += `<span class="upgrade-success">${game.i18n.format('CoC7.LuckIncreased', {die: upgradeRoll.total, score: luck.value, augment: augmentRoll.total})}</span>`;
+				} else {
+					let correctedValue;
+					for(let i = 1; i <= 10; i++) {
+						if((luck.value + augmentRoll.total - i) <= 99) {
+							correctedValue = augmentRoll.total - i;
+							break
+						}
+					}
+					await this.update({
+						'data.attribs.lck.value': this.data.data.attribs.lck.value + correctedValue
+					})
+					message += `<span class="upgrade-success">${game.i18n.format('CoC7.LuckIncreased', {die: upgradeRoll.total, score: luck.value, augment: correctedValue})}</span>`;
+				}
+		} else {
+			message += `<span class="upgrade-failed">${game.i18n.format('CoC7.LuckNotIncreased', {die: upgradeRoll.total, score: luck.value})}</span>`;
+		}
+		if(!fastForward){
+			message += '</p>';
+			const speaker = {actor: this.actor};
+			await chatHelper.createMessage(title, message, {speaker:speaker});
+		}
+	}
+
 	async developSkill( skillId, fastForward = false){
 		const skill = this.getOwnedItem( skillId);
 		if( !skill) return;
@@ -2229,6 +2349,10 @@ export class CoCActor extends Actor {
 
 	async resetCounter( counter){
 		await this.update( {[counter]: 0});
+	}
+
+	async setOneFifthSanity (oneFifthSanity) {
+		await this.update({"data.attribs.san.oneFifthSanity": oneFifthSanity});
 	}
 
 	get fightingSkills(){
@@ -2411,6 +2535,19 @@ export class CoCActor extends Actor {
 		if( !this.isPC) return null;
 		return game.users.filter( u => u.character.id == this.id)[0];
 	}
+	
+	async setHealthStatusManually(event) {
+        if (event.originalEvent) {
+            const healthBefore = parseInt(event.originalEvent.currentTarget.defaultValue);
+            const healthAfter = parseInt(event.originalEvent.currentTarget.value);
+            let damageTaken;
+            healthAfter >= this.hp ? this.setHp(healthAfter) : false;
+            healthAfter < 0 ? damageTaken = Math.abs(healthAfter)
+							: damageTaken = healthBefore - healthAfter;
+            this.render(true);
+            return await this.dealDamage(damageTaken);
+        }
+    }
 
 	async dealDamage(amount, options={}){
 		let total = parseInt(amount);
