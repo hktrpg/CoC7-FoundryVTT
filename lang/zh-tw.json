@@ -704,5 +704,7 @@
     "SETTINGS.AdviseOwnersOnly": "Notify actor's owner",
     "SETTINGS.AdviseAllPlayer": "Notify all players",
     "SETTINGS.OneBlockBackStory": "One block backstory",
-    "SETTINGS.OneBlockBackStoryHint": "Turn backstory to one editor block, but you can format/add links."
+    "SETTINGS.OneBlockBackStoryHint": "Turn backstory to one editor block, but you can format/add links.",
+    "CoC7.PlayerName": "玩家",
+    "CoC7.initialvalue": "每天開始時的San值"
 }
