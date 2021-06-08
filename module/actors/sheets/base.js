@@ -1135,6 +1135,7 @@ export class CoC7ActorSheet extends ActorSheet {
 
 		let sanMin, sanMax;
 		if( event.altKey && attrib == 'san'){
+			//check!!toDO
 			const sanData = await SanDataDialog.create( {
 				promptLabel : false //TODO: Remove, deprecated.
 			});

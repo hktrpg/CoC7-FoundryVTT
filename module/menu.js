@@ -206,6 +206,7 @@ export class CoC7Menu {
 			visible: isGM,
 			button: true,
 			onClick: CoC7LinkCreationDialog.create
+			//!!TODO!!
 		});
 		return controls;
 	}
