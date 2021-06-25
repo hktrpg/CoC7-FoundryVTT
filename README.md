@@ -22,6 +22,30 @@ Compendium 'Roll Requests' contains numerous links for all your needs.
 
 ## What is working
 
+version 0.6.1 :
+
+* #562 from @snap01 : Adding information on compendium translation. Compendium translation can be found here :
+  * [Spanish](https://foundryvtt.com/packages/call-of-cthulhu-7th-babele-es)
+  * [Svenska](https://foundryvtt.com/packages/coc7-babele-sv)
+  * [Deutsch](https://foundryvtt.com/packages/call-of-cthulhu-7th-babele-de)
+  * [Italian](https://foundryvtt.com/packages/call-of-cthulhu-7th-babele-it)
+  * [Brazilian](https://foundryvtt.com/packages/call-of-cthulhu-7th-babele-pt-BR)
+  * [Korean](https://foundryvtt.com/packages/CoC7kr)
+
+version 0.6.0 :
+
+* Ready for 0.8.x thanks to the kind help of
+  * @pconcepcion
+  * @snap01
+* This version is NOT compatible with foundry version < 0.8
+* Please report all bugs on github !
+* #538 Upgrade on health monitor thanks to @castanhocorreia.
+  * Modifying HP manually will now correctly trigger all status.
+  * You can set HP by entering negative value : (HP=25)/Enter -7/(HP=18).
+* #549 bug correction from @zeteticl.
+* #555 regression fixed by @snap01.
+* Taiwanese Mandarin translations updated thanks to @zeteticl.
+
 version 0.5.9 :
 
 * ___!! Last release in 0.7.x cycle !!___

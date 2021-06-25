@@ -33,6 +33,7 @@ import { DamageCard } from './chat/cards/damage.js';
 import { CoC7VehicleSheet } from './actors/sheets/vehicle.js';
 import { CoC7Canvas } from './apps/canvas.js';
 import { CoC7ChaseSheet } from './items/sheets/chase.js';
+import { CoC7CompendiumDirectory } from './compendium-directory.js';
 
 Hooks.once('init', async function() {
 
@@ -60,7 +61,7 @@ Hooks.once('init', async function() {
 
 	game.settings.register('CoC7', 'debugmode', {
 		name: 'SETTINGS.DebugMode',
-		hint: "SETTINGS.DebugModeHint",
+		hint: 'SETTINGS.DebugModeHint',
 		scope: 'world',
 		config: true,
 		type: Boolean,
@@ -68,8 +69,8 @@ Hooks.once('init', async function() {
 	});
 
 	CONFIG.debug.hooks = !!game.settings.get('CoC7', 'debugmode');
-	CONFIG.Actor.entityClass = CoCActor;
-	CONFIG.Item.entityClass = CoC7Item;
+	CONFIG.Actor.documentClass = CoCActor;
+	CONFIG.Item.documentClass = CoC7Item;
 	Combat.prototype.rollInitiative = rollInitiative;
 
 	game.settings.register('CoC7', 'developmentEnabled', {
@@ -125,6 +126,14 @@ Hooks.once('init', async function() {
 	game.settings.register('CoC7', 'developmentRollForLuck', {
 		name: 'SETTINGS.developmentRollForLuck',
 		hint: 'SETTINGS.developmentRollForLuckHint',
+		scope: 'world',
+		config: true,
+		default: false,
+		type: Boolean
+	});
+
+	game.settings.register('CoC7', 'displayPlayerNameOnSheet', {
+		name: 'SETTINGS.displayPlayerNameOnSheet',
 		scope: 'world',
 		config: true,
 		default: false,
@@ -722,9 +731,12 @@ Hooks.on('renderItemSheet', CoC7Parser.ParseSheetContent);
 Hooks.on('renderJournalSheet', CoC7Parser.ParseSheetContent);
 Hooks.on('renderActorSheet', CoC7Parser.ParseSheetContent);
 // Chat command processing
-Hooks.on('preCreateChatMessage', CoC7Parser.ParseMessage);
+// Hooks.on('preCreateChatMessage', CoC7Parser.ParseMessage);
 // Hooks.on('createChatMessage', CoC7Chat.createChatMessageHook);
-Hooks.on('renderChatMessage', CoC7Chat.renderChatMessageHook);
+Hooks.on('renderChatMessage',  (app, html, data) =>{
+	CoC7Chat.renderChatMessageHook(app, html, data);
+	CoC7Parser.ParseMessage( app, html, data);
+});
 // Sheet V2 css options
 // Hooks.on('renderCoC7CharacterSheetV2', CoC7CharacterSheetV2.renderSheet);
 Hooks.on('renderActorSheet', CoC7CharacterSheetV2.renderSheet); //TODO : change from CoC7CharacterSheetV2
@@ -753,24 +765,26 @@ function _onLeftClick( event){
 }
 
 Hooks.on('targetToken', function (user, token, targeted) {
-  if (targeted) {
-    // Check if the targeted token is a player controlled token but no user controls it
-    let gmonly = true
-    if (token.actor.data.permission.default === CONST.ENTITY_PERMISSIONS.OWNER) {
-      gmonly = false
-    } else {
-      const gms = game.users.filter(a => a.isGM).map(a => a.id)
-      for (const [k, v] of Object.entries(token.actor.data.permission)) {
-        if (k !== 'default' && v === CONST.ENTITY_PERMISSIONS.OWNER && !gms.includes(k)) {
-          gmonly = false
-        }
-      }
-    }
-    if (!gmonly) {
-      const controlled = game.users.filter(a => !a.isGM && a.data.character === token.actor.id)
-      if (controlled.length === 0) {
-        ui.notifications.error(game.i18n.format('CoC7.MessageSelectedTargetIsNotControlled', { name: token.name }))
-      }
-    }
-  }
-})
+	if (targeted) {
+		// Check if the targeted token is a player controlled token but no user controls it
+		let gmonly = true;
+		if (token.actor.data.permission.default === CONST.ENTITY_PERMISSIONS.OWNER) {
+			gmonly = false;
+		} else {
+			const gms = game.users.filter(a => a.isGM).map(a => a.id);
+			for (const [k, v] of Object.entries(token.actor.data.permission)) {
+				if (k !== 'default' && v === CONST.ENTITY_PERMISSIONS.OWNER && !gms.includes(k)) {
+					gmonly = false;
+				}
+			}
+		}
+		if (!gmonly) {
+			const controlled = game.users.filter(a => !a.isGM && a.data.character === token.actor.id);
+			if (controlled.length === 0) {
+				ui.notifications.error(game.i18n.format('CoC7.MessageSelectedTargetIsNotControlled', { name: token.name }));
+			}
+		}
+	}
+});
+
+CONFIG.ui.compendium = CoC7CompendiumDirectory;
