@@ -1835,9 +1835,12 @@ export class CoCActor extends Actor {
 			if( !item){
 				//TODO: Implement retrieval of skill from compendium !!
 				// game.settings.get( 'CoC7', 'DefaultCompendium');
+				let check = new CoC7Check();
+				check._rawValue='?';
+				check.roll();
+				check.toMessage();
 			}
-
-			if( !item) return ui.notifications.warn(`No skill ${skillData.name? skillData.name : skillData} found for actor ${this.name}`);
+			if( !item) return ui.notifications.warn(game.i18n.format('CoC7.NoSkill')+game.i18n.format('CoC7.ErrorNotFoundForActor', {missing: skillData.name? skillData.name : skillData, actor: this.name}));
 
 			let create = false;
 			await Dialog.confirm({
@@ -2424,6 +2427,7 @@ export class CoCActor extends Actor {
 
 	async resetCounter( counter){
 		await this.update( {[counter]: 0});
+		await this.update( { 'data.attribs.san.initialvalue': this.data.data.attribs.san.value});
 	}
 
 	async setOneFifthSanity (oneFifthSanity) {
