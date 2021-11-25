@@ -97,7 +97,9 @@ export class CoC7Check {
   get rawValue () {
     // if (!this.actor || !this.actor.id) return undefined
     if (!this._rawValue) {
+      console.log('this',this)
       if (this.characteristic) {
+        console.log('this.actor.data.data.characteristics[this.characteristic].value',this.actor.data.data.characteristics[this.characteristic].value)
         this.rawValue = this.actor.data.data.characteristics[
           this.characteristic
         ].value

@@ -80,8 +80,8 @@
 				</div>
 				<div class="footer">
 					{{#if data.flags.locked}}
-						<div class="attribute" data-attrib="mov" data-roll-formula="{{data.attribs.con.value}}">
-							<div class="attribute-label"><h2>{{localize 'CoC7.Mov'}}:</h2></div>
+						<div class="attribute" data-characteristic="con" data-roll-formula="{{actor.data.data.characteristics.con.value}}">
+							<div class="attribute-label rollable"><h2>{{localize 'CoC7.Mov'}}:</h2></div>
 							<div class="attribute-value">{{data.attribs.mov.value}}</div>
 						</div>
 						<div class="attribute">
